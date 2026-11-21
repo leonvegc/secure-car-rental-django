@@ -1,4 +1,12 @@
-# Alquiler de Vehículos — Sistema web seguro (ISW-622, Proyecto 2)
+# Secure Car Rental (Django)
+
+> Hardened car rental web app built with Django 6 and PostgreSQL. It has role-based access control, Argon2id password hashing, brute-force lockout, a 60-second session timeout, CSRF protection and a strict Content-Security-Policy, plus an immutable audit log and an automated security test suite (pytest, HTML/XML reports). It was built to withstand a cross-team penetration test.
+
+**Course project:** ISW-622 Software Testing, Universidad Técnica Nacional (Costa Rica). The documentation below is in Spanish.
+
+---
+
+## Alquiler de Vehículos — Sistema web seguro (ISW-622, Proyecto 2)
 
 Dominio 9 — **Alquiler de vehículos**. Entidad principal: **Vehículo**. Rol operativo: **Agente de alquiler**.
 
@@ -28,7 +36,7 @@ Tras 5 intentos fallidos, la combinación de usuario e IP queda bloqueada 15 min
 ## Instalación local
 
 ```bash
-git clone <url-del-repo> && cd alquiler-vehiculos-seguro
+git clone <url-del-repo> && cd secure-car-rental-django
 python -m venv .venv
 # Windows (PowerShell):  .venv\Scripts\Activate.ps1
 # Linux/macOS:           source .venv/bin/activate

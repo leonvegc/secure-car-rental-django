@@ -25,7 +25,7 @@ services:
       - key: DB_SSL_REQUIRE
         value: "0"   # conexión interna por la red privada de Render
       - key: SECRET_KEY
-        generateValue: true
+        sync: false   # 64+ caracteres aleatorios (Render genera solo 44 y Django exige 50+)
       - key: DEBUG
         value: "0"
       - key: USAR_HTTPS

@@ -333,3 +333,13 @@ def test_ip_falsa_en_x_forwarded_for_no_se_acepta():
     assert obtener_ip(req) == "198.51.100.7"
     req = RequestFactory().get("/", HTTP_X_FORWARDED_FOR="<script>", REMOTE_ADDR="10.0.0.1")
     assert obtener_ip(req) == "10.0.0.1"
+
+
+@pytest.mark.auditoria
+@override_settings(CLIENT_IP_HEADER="True-Client-IP", TRUSTED_PROXY_COUNT=1)
+def test_ip_real_desde_true_client_ip_en_render():
+    """En Render se usa True-Client-IP (Cloudflare) y se ignora un X-Forwarded-For falsificado."""
+    req = RequestFactory().get(
+        "/", HTTP_TRUE_CLIENT_IP="198.51.100.20", HTTP_X_FORWARDED_FOR="6.6.6.6, 10.0.0.9", REMOTE_ADDR="10.0.0.1"
+    )
+    assert obtener_ip(req) == "198.51.100.20"

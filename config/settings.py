@@ -226,6 +226,9 @@ if USAR_HTTPS:
 # Número de proxies de confianza delante de la app (Render = 1). Se usa para
 # obtener la IP real del cliente desde X-Forwarded-For sin aceptar IPs falsas.
 TRUSTED_PROXY_COUNT = int(os.environ.get("TRUSTED_PROXY_COUNT", "1"))
+# Encabezado confiable con la IP del cliente puesto por el proxy de borde.
+# En Render: "True-Client-IP" (lo agrega Cloudflare; Render no limpia X-Forwarded-For).
+CLIENT_IP_HEADER = os.environ.get("CLIENT_IP_HEADER", "")
 
 # ---------------------------------------------------------------------------
 # Protección contra fuerza bruta (django-axes)

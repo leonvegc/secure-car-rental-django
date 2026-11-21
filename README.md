@@ -20,7 +20,7 @@ Se eligió Django porque trae protecciones nativas: un ORM parametrizado, planti
 
 ## Ambiente publicado
 
-- URL: _(se completa al publicar en Render)_
+- URL: https://alquiler-vehiculos-8o4q.onrender.com
 - El plan gratuito de Render apaga el servicio tras 15 minutos sin uso. La primera solicitud puede tardar unos 50 segundos en responder.
 
 ## Credenciales de prueba (datos ficticios)
@@ -61,6 +61,7 @@ Abra http://127.0.0.1:8000. Sin `DATABASE_URL` se usa SQLite local. Para usar Po
 | `USAR_HTTPS` | Redirección HTTPS, HSTS y cookies Secure | `1` en producción |
 | `SESION_INACTIVIDAD_SEGUNDOS` | Tiempo máximo de inactividad | `60` |
 | `TRUSTED_PROXY_COUNT` | Proxies de confianza (Render = 1) | `1` |
+| `CLIENT_IP_HEADER` | Encabezado confiable con la IP real (Render: `True-Client-IP`) | vacío |
 | `AXES_FAILURE_LIMIT` / `AXES_COOLOFF_MINUTOS` | Bloqueo por fuerza bruta | `5` / `15` |
 | `SEED_SUPERADMIN_PASSWORD`, `SEED_AUDITOR_PASSWORD`, `SEED_AGENTE_PASSWORD` | Contraseñas de los usuarios de prueba | obligatorias en producción |
 

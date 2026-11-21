@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block titulo %}Inicio{% endblock %}
+{% block contenido %}
+<h2>Bienvenido, {{ user.nombre_completo }}</h2>
+<p>Rol: <span class="etiqueta">{{ user.rol.nombre }}</span></p>
+<p>Use el menú superior para acceder a los módulos permitidos para su rol.</p>
+{% endblock %}

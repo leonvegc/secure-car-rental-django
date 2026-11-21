@@ -1,0 +1,17 @@
+/* Estilos propios. Sin estilos en línea: la CSP bloquea style="..." */
+:root { --pico-font-size: 100%; }
+body > header nav { border-bottom: 1px solid var(--pico-muted-border-color); }
+.marca { font-weight: 700; }
+.aviso-sesion { position: fixed; bottom: 1rem; right: 1rem; max-width: 22rem; z-index: 10; }
+.oculto { display: none !important; }
+.mensajes { list-style: none; padding: 0; }
+.mensajes li { padding: .6rem 1rem; border-radius: var(--pico-border-radius); margin-bottom: .5rem; }
+.mensajes .success { background: #d1f2d9; color: #0f5132; }
+.mensajes .error { background: #f8d7da; color: #842029; }
+.mensajes .warning, .mensajes .info { background: #fff3cd; color: #664d03; }
+.tabla-acciones { display: flex; gap: .5rem; flex-wrap: wrap; }
+.tabla-acciones form { margin: 0; }
+.tabla-acciones button, .tabla-acciones a[role=button] { padding: .25rem .6rem; font-size: .85rem; margin: 0; }
+.errorlist { color: #b00020; list-style: none; padding-left: 0; font-size: .9rem; }
+.centrado { max-width: 28rem; margin: 3rem auto; }
+.etiqueta { padding: .1rem .5rem; border-radius: 1rem; font-size: .8rem; background: var(--pico-secondary-background); color: var(--pico-secondary-inverse); }

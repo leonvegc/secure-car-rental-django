@@ -1,0 +1,53 @@
+{% load static seguridad %}<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="same-origin">
+  <title>{% block titulo %}Alquiler de Vehículos{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'css/pico.min.css' %}">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+</head>
+<body{% if user.is_authenticated %} data-sesion-segundos="{{ sesion_segundos }}" data-url-login="{% url 'cuentas:login' %}"{% endif %}>
+  <header class="container">
+    <nav>
+      <ul><li><a href="{% url 'core:inicio' %}" class="marca">Alquiler de Vehículos</a></li></ul>
+      {% if user.is_authenticated %}
+      <ul>
+        {% if permisos_usuario|tiene:"vehiculos.ver" %}<li><a href="{% url 'vehiculos:lista' %}">Vehículos</a></li>{% endif %}
+        {% if permisos_usuario|tiene:"clientes.ver" %}<li><a href="{% url 'clientes:lista' %}">Clientes</a></li>{% endif %}
+        {% if permisos_usuario|tiene:"alquileres.ver" %}<li><a href="{% url 'alquileres:lista' %}">Alquileres</a></li>
+        <li><a href="{% url 'alquileres:disponibilidad' %}">Disponibilidad</a></li>{% endif %}
+        {% if permisos_usuario|tiene:"reportes.ver_reportes" %}<li><a href="{% url 'alquileres:reporte_ingresos' %}">Ingresos</a></li>{% endif %}
+        {% if permisos_usuario|tiene:"usuarios.ver" %}<li><a href="{% url 'administracion:usuarios_lista' %}">Usuarios</a></li>{% endif %}
+        {% if es_superadmin and permisos_usuario|tiene:"roles.ver" %}<li><a href="{% url 'administracion:roles_lista' %}">Roles</a></li>{% endif %}
+        {% if es_superadmin %}<li><a href="{% url 'administracion:auditoria_lista' %}">Auditoría</a></li>{% endif %}
+        <li>
+          <form method="post" action="{% url 'cuentas:logout' %}" class="form-logout">
+            {% csrf_token %}
+            <button type="submit" class="secondary outline">Salir ({{ user.username }})</button>
+          </form>
+        </li>
+      </ul>
+      {% endif %}
+    </nav>
+  </header>
+
+  <main class="container">
+    {% if messages %}
+    <ul class="mensajes">
+      {% for m in messages %}<li class="{{ m.tags }}">{{ m }}</li>{% endfor %}
+    </ul>
+    {% endif %}
+    {% block contenido %}{% endblock %}
+  </main>
+
+  {% if user.is_authenticated %}
+  <article id="aviso-sesion" class="aviso-sesion oculto" role="alert">
+    Su sesión se cerrará por inactividad en <strong id="aviso-sesion-segundos"></strong> s.
+  </article>
+  <script src="{% static 'js/sesion.js' %}"></script>
+  {% endif %}
+  {% block scripts %}{% endblock %}
+</body>
+</html>

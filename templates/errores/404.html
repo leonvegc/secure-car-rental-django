@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block titulo %}Página no encontrada{% endblock %}
+{% block contenido %}
+<article class="centrado">
+  <h2>404 — Página no encontrada</h2>
+  <p>La página solicitada no existe.</p>
+  {% if es_csrf %}<p>El formulario expiró o no es válido. Recargue la página e intente de nuevo.</p>{% endif %}
+  <a href="/" role="button" class="secondary">Volver al inicio</a>
+</article>
+{% endblock %}

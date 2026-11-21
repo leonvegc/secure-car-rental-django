@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block titulo %}Solicitud inválida{% endblock %}
+{% block contenido %}
+<article class="centrado">
+  <h2>400 — Solicitud inválida</h2>
+  <p>La solicitud no se pudo procesar.</p>
+  {% if es_csrf %}<p>El formulario expiró o no es válido. Recargue la página e intente de nuevo.</p>{% endif %}
+  <a href="/" role="button" class="secondary">Volver al inicio</a>
+</article>
+{% endblock %}

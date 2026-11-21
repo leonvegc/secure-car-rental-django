@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block titulo %}Acceso denegado{% endblock %}
+{% block contenido %}
+<article class="centrado">
+  <h2>403 — Acceso denegado</h2>
+  <p>No tiene permiso para realizar esta acción.</p>
+  {% if es_csrf %}<p>El formulario expiró o no es válido. Recargue la página e intente de nuevo.</p>{% endif %}
+  <a href="/" role="button" class="secondary">Volver al inicio</a>
+</article>
+{% endblock %}

@@ -41,3 +41,28 @@ class CrearAlquilerForm(forms.Form):
         label="Fecha de fin",
         widget=forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
     )
+
+
+class DisponibilidadForm(forms.Form):
+    """RFD-9.4. Consulta GET: el rango se valida antes de tocar la base de datos."""
+
+    RANGO_MAXIMO_DIAS = 366
+
+    inicio = forms.DateField(
+        label="Desde",
+        widget=forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
+    )
+    fin = forms.DateField(
+        label="Hasta",
+        widget=forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
+    )
+
+    def clean(self):
+        datos = super().clean()
+        inicio, fin = datos.get("inicio"), datos.get("fin")
+        if inicio and fin:
+            if fin <= inicio:
+                raise forms.ValidationError("La fecha final debe ser posterior a la fecha inicial.")
+            if (fin - inicio).days > self.RANGO_MAXIMO_DIAS:
+                raise forms.ValidationError(f"El rango máximo de consulta es de {self.RANGO_MAXIMO_DIAS} días.")
+        return datos

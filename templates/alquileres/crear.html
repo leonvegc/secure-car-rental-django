@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block titulo %}Nuevo alquiler{% endblock %}
+{% block contenido %}
+<h2>Nuevo alquiler</h2>
+<p>El total se calcula automáticamente con la tarifa diaria del vehículo.</p>
+
+<form method="post">
+  {% csrf_token %}
+  {{ form.as_div }}
+  <button type="submit">Registrar alquiler</button>
+  <a href="{% url 'alquileres:lista' %}" role="button" class="secondary outline">Cancelar</a>
+</form>
+{% endblock %}

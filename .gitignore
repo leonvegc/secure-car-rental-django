@@ -12,3 +12,6 @@ reportes/
 .DS_Store
 .idea/
 .vscode/
+
+# Paquetes de instrucciones personales (no se suben)
+paquete/

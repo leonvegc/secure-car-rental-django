@@ -94,3 +94,60 @@ def crear_alquiler(*, cliente, vehiculo, fecha_inicio, fecha_fin, usuario):
     vehiculo.estado = Vehiculo.Estado.ALQUILADO
     vehiculo.save(update_fields=["estado", "actualizado_en"])
     return alquiler
+
+
+def _liberar_vehiculo(vehiculo):
+    """
+    Devuelve el vehículo a DISPONIBLE cuando ya no tiene ningún alquiler ACTIVO.
+
+    Solo cambia el estado si está en ALQUILADO: un vehículo que pasó a
+    MANTENIMIENTO mientras estaba alquilado se queda en MANTENIMIENTO.
+    """
+    tiene_otro_activo = Alquiler.objects.filter(vehiculo=vehiculo, estado=Alquiler.Estado.ACTIVO).exists()
+    if not tiene_otro_activo and vehiculo.estado == Vehiculo.Estado.ALQUILADO:
+        vehiculo.estado = Vehiculo.Estado.DISPONIBLE
+        vehiculo.save(update_fields=["estado", "actualizado_en"])
+
+
+def _bloquear_alquiler_activo(alquiler):
+    """
+    Bloquea el vehículo y luego el alquiler (siempre en ese orden) y vuelve a
+    leer el alquiler de la base de datos: el objeto que llega puede estar
+    desactualizado si otra solicitud lo finalizó un instante antes.
+    """
+    vehiculo = Vehiculo.objects.select_for_update().get(pk=alquiler.vehiculo_id)
+    actual = Alquiler.objects.select_for_update().get(pk=alquiler.pk)
+    if actual.estado != Alquiler.Estado.ACTIVO:
+        raise ReglaNegocioError("El alquiler ya fue finalizado.")
+    return actual, vehiculo
+
+
+@transaction.atomic
+def registrar_devolucion(*, alquiler, usuario):
+    """
+    RFD-9.3: registra la devolución. El alquiler queda FINALIZADO con la fecha
+    de devolución y quién la recibió, y el vehículo vuelve a DISPONIBLE salvo
+    que tenga otro alquiler ACTIVO.
+    """
+    actual, vehiculo = _bloquear_alquiler_activo(alquiler)
+    actual.estado = Alquiler.Estado.FINALIZADO
+    actual.fecha_devolucion = timezone.now()
+    actual.recibido_por = usuario
+    actual.save(update_fields=["estado", "fecha_devolucion", "recibido_por"])
+    _liberar_vehiculo(vehiculo)
+    return actual
+
+
+@transaction.atomic
+def anular_alquiler(*, alquiler, usuario):
+    """
+    Anula un alquiler ACTIVO (por ejemplo, uno creado por error): se elimina y
+    el vehículo vuelve a DISPONIBLE salvo que tenga otro alquiler ACTIVO.
+
+    Un alquiler FINALIZADO nunca se anula ni se borra: es un registro
+    financiero. La auditoría la escribe la vista, que conoce el request.
+    """
+    actual, vehiculo = _bloquear_alquiler_activo(alquiler)
+    actual.delete()
+    _liberar_vehiculo(vehiculo)
+    return actual  # ya sin pk, pero conserva código y placa para la auditoría

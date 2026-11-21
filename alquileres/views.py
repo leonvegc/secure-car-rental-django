@@ -19,9 +19,15 @@ from core.auditoria import registrar_evento
 from core.models import RegistroAuditoria
 from core.permisos import requiere_permiso
 
-from .forms import CrearAlquilerForm, FiltroAlquileresForm
+from .forms import CrearAlquilerForm, DisponibilidadForm, FiltroAlquileresForm
 from .models import Alquiler
-from .servicios import ReglaNegocioError, anular_alquiler, crear_alquiler, registrar_devolucion
+from .servicios import (
+    ReglaNegocioError,
+    anular_alquiler,
+    crear_alquiler,
+    registrar_devolucion,
+    vehiculos_disponibles,
+)
 
 
 def _alquileres():
@@ -124,12 +130,27 @@ def anular(request, pk):
     return redirect("alquileres:lista")
 
 
-# Marcadores: se reemplazan en los pasos 5 (disponibilidad) y 6 (ingresos).
 @requiere_permiso("alquileres.ver")
+@require_GET
 def disponibilidad(request):
-    return render(request, "core/en_construccion.html", {"titulo": "Disponibilidad"})
+    """RFD-9.4: vehículos disponibles en un rango de fechas (formulario GET)."""
+    consultado = "inicio" in request.GET or "fin" in request.GET
+    form = DisponibilidadForm(request.GET) if consultado else DisponibilidadForm()
+    contexto = {"form": form, "resultados": None}
+    if consultado and form.is_valid():
+        inicio, fin = form.cleaned_data["inicio"], form.cleaned_data["fin"]
+        dias = (fin - inicio).days
+        vehiculos = vehiculos_disponibles(inicio, fin).order_by("placa")
+        contexto.update(
+            inicio=inicio,
+            fin=fin,
+            dias=dias,
+            resultados=[{"vehiculo": v, "total_estimado": v.tarifa_diaria * dias} for v in vehiculos],
+        )
+    return render(request, "alquileres/disponibilidad.html", contexto)
 
 
+# Marcador: se reemplaza en el paso 6 (ingresos).
 @requiere_permiso("reportes.ver_reportes")
 def reporte_ingresos(request):
     return render(request, "core/en_construccion.html", {"titulo": "Reporte de ingresos"})

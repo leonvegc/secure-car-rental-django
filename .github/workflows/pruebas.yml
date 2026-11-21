@@ -1,0 +1,38 @@
+name: Pruebas de seguridad
+on:
+  push:
+  pull_request:
+
+jobs:
+  pruebas:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: alquiler
+          POSTGRES_PASSWORD: alquiler
+          POSTGRES_DB: alquiler
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgres://alquiler:alquiler@localhost:5432/alquiler
+      DB_SSL_REQUIRE: "0"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - run: python manage.py makemigrations --check --dry-run
+        env:
+          SECRET_KEY: solo-ci
+          DEBUG: "1"
+      - run: pytest
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reporte-seguridad
+          path: reportes/

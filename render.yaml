@@ -1,0 +1,40 @@
+# Blueprint de Render: crea la base de datos PostgreSQL y el servicio web (plan gratuito).
+# Render > New > Blueprint > seleccionar este repositorio.
+databases:
+  - name: alquiler-db
+    plan: free
+    databaseName: alquiler
+    user: alquiler
+    # Sin acceso desde Internet: solo el servicio web (red privada de Render) se conecta.
+    ipAllowList: []
+
+services:
+  - type: web
+    name: alquiler-vehiculos
+    runtime: python
+    plan: free
+    buildCommand: bash build.sh
+    startCommand: gunicorn config.wsgi:application
+    healthCheckPath: /salud/
+    autoDeploy: true
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: alquiler-db
+          property: connectionString
+      - key: DB_SSL_REQUIRE
+        value: "0"   # conexión interna por la red privada de Render
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "0"
+      - key: USAR_HTTPS
+        value: "1"
+      - key: TRUSTED_PROXY_COUNT
+        value: "1"
+      - key: SEED_SUPERADMIN_PASSWORD
+        sync: false
+      - key: SEED_AUDITOR_PASSWORD
+        sync: false
+      - key: SEED_AGENTE_PASSWORD
+        sync: false

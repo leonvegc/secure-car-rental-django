@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block titulo %}Reporte de ingresos{% endblock %}
+{% block contenido %}
+<h2>Reporte de ingresos</h2>
+<p>Alquileres cuya fecha de inicio está dentro del rango (máximo 366 días).</p>
+
+<form method="get">
+  {{ form.as_div }}
+  <button type="submit">Generar reporte</button>
+</form>
+
+{% if reporte %}
+<article>
+  <h3>Del {{ reporte.desde|date:"d/m/Y" }} al {{ reporte.hasta|date:"d/m/Y" }}</h3>
+  <p>Ingresos totales: <strong>₡{{ reporte.total|floatformat:"2g" }}</strong></p>
+  <p>Cantidad de alquileres: <strong>{{ reporte.cantidad }}</strong></p>
+</article>
+
+{% if reporte.cantidad %}
+<h3>Por categoría de vehículo</h3>
+<div class="overflow-auto">
+  <table>
+    <thead>
+      <tr><th>Categoría</th><th>Alquileres</th><th>Ingresos</th></tr>
+    </thead>
+    <tbody>
+      {% for fila in reporte.por_categoria %}
+      <tr>
+        <td>{{ fila.categoria }}</td>
+        <td>{{ fila.cantidad }}</td>
+        <td>₡{{ fila.total|floatformat:"2g" }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<h3>Detalle</h3>
+{% if reporte.recortado %}
+<p>Se muestran los primeros {{ reporte.max_filas }} de {{ reporte.cantidad }} alquileres. Los totales de arriba incluyen todos.</p>
+{% endif %}
+<div class="overflow-auto">
+  <table>
+    <thead>
+      <tr>
+        <th>Código</th>
+        <th>Cliente</th>
+        <th>Placa</th>
+        <th>Inicio</th>
+        <th>Fin</th>
+        <th>Días</th>
+        <th>Total</th>
+        <th>Estado</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for a in reporte.detalle %}
+      <tr>
+        <td><a href="{% url 'alquileres:detalle' a.pk %}">{{ a.codigo }}</a></td>
+        <td>{{ a.cliente.nombre_completo }}</td>
+        <td>{{ a.vehiculo.placa }}</td>
+        <td>{{ a.fecha_inicio|date:"d/m/Y" }}</td>
+        <td>{{ a.fecha_fin|date:"d/m/Y" }}</td>
+        <td>{{ a.dias }}</td>
+        <td>₡{{ a.total|floatformat:"2g" }}</td>
+        <td><span class="etiqueta">{{ a.get_estado_display }}</span></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<p>No hay alquileres con fecha de inicio en ese rango.</p>
+{% endif %}
+{% endif %}
+{% endblock %}

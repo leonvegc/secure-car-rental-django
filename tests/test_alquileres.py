@@ -60,6 +60,7 @@ def alquilar(vehiculo, cliente, usuario, inicio, fin):
 # 1 ---------------------------------------------------------------------------
 @pytest.mark.negocio
 def test_rn91_licencia_vencida_o_que_vence_antes_del_fin_es_rechazada(agente):
+    """RN-9.1: una licencia vencida, o que vence antes de fecha_fin, impide el alquiler."""
     vehiculo = crear_vehiculo()
     vencida = crear_cliente(cedula="111111111", licencia="LIC11111", vence_en=-1)
     vence_pronto = crear_cliente(cedula="222222222", licencia="LIC22222", vence_en=3)
@@ -77,6 +78,7 @@ def test_rn91_licencia_vencida_o_que_vence_antes_del_fin_es_rechazada(agente):
 # 2 ---------------------------------------------------------------------------
 @pytest.mark.negocio
 def test_rn92_vehiculo_en_mantenimiento_es_rechazado(agente):
+    """RN-9.2: un vehículo en mantenimiento no se puede alquilar."""
     vehiculo = crear_vehiculo(estado="MANTENIMIENTO")
     with pytest.raises(ReglaNegocioError, match="mantenimiento"):
         alquilar(vehiculo, crear_cliente(), agente, 1, 4)
@@ -86,6 +88,7 @@ def test_rn92_vehiculo_en_mantenimiento_es_rechazado(agente):
 # 3 ---------------------------------------------------------------------------
 @pytest.mark.negocio
 def test_rn93_minimo_un_dia_en_el_servicio_y_en_la_base_de_datos(agente):
+    """RN-9.3: el alquiler es de mínimo 1 día, en el servicio y en la restricción de la BD."""
     vehiculo, cliente = crear_vehiculo(), crear_cliente()
 
     with pytest.raises(ReglaNegocioError, match="al menos 1 día"):
@@ -109,6 +112,7 @@ def test_rn93_minimo_un_dia_en_el_servicio_y_en_la_base_de_datos(agente):
 # 4 ---------------------------------------------------------------------------
 @pytest.mark.negocio
 def test_rfd92_total_calculado_vehiculo_alquilado_y_traslape_rechazado(agente):
+    """RFD-9.2: el total se calcula en el servidor y no se permiten alquileres traslapados."""
     vehiculo, cliente = crear_vehiculo(tarifa="25000"), crear_cliente()
 
     alquiler = alquilar(vehiculo, cliente, agente, 1, 4)  # 3 días
@@ -131,6 +135,7 @@ def test_rfd92_total_calculado_vehiculo_alquilado_y_traslape_rechazado(agente):
 # 5 ---------------------------------------------------------------------------
 @pytest.mark.negocio
 def test_rfd93_devolucion_finaliza_libera_el_vehiculo_y_no_se_repite(agente, superadmin):
+    """RFD-9.3: la devolución finaliza el alquiler, libera el vehículo y no se puede repetir."""
     vehiculo = crear_vehiculo()
     alquiler = alquilar(vehiculo, crear_cliente(), agente, 0, 3)
 
@@ -150,6 +155,7 @@ def test_rfd93_devolucion_finaliza_libera_el_vehiculo_y_no_se_repite(agente, sup
 # 6 ---------------------------------------------------------------------------
 @pytest.mark.negocio
 def test_rfd94_disponibilidad_y_rfd95_ingresos_suman_correctamente(agente, cliente_agente):
+    """RFD-9.4 y RFD-9.5: la disponibilidad excluye mantenimiento y traslapes; el reporte suma bien."""
     libre = crear_vehiculo("LIBRE1")
     crear_vehiculo("MANT222", estado="MANTENIMIENTO")
     ocupado = crear_vehiculo("OCUP333", tarifa="30000", categoria="SUV")
@@ -189,6 +195,7 @@ def test_rfd94_disponibilidad_y_rfd95_ingresos_suman_correctamente(agente, clien
 # 7 ---------------------------------------------------------------------------
 @pytest.mark.acceso
 def test_auditor_recibe_403_en_reporte_lista_y_crear(cliente_auditor):
+    """Control de acceso (UTN-05/06): el Auditor no tiene permisos de alquileres y recibe 403."""
     assert cliente_auditor.get(reverse("alquileres:reporte_ingresos")).status_code == 403
     assert cliente_auditor.get(reverse("alquileres:lista")).status_code == 403
     assert cliente_auditor.post(reverse("alquileres:crear"), {}).status_code == 403
@@ -197,6 +204,7 @@ def test_auditor_recibe_403_en_reporte_lista_y_crear(cliente_auditor):
 # 8 ---------------------------------------------------------------------------
 @pytest.mark.sqli
 def test_tc02_sqli_en_lista_y_en_disponibilidad_no_da_error_ni_filtra_datos(cliente_agente):
+    """TC-02 (SQL Injection): payloads en la búsqueda de la lista y en la fecha de disponibilidad."""
     ataque_lista = "' UNION SELECT username, password FROM cuentas_usuario --"
     respuesta = cliente_agente.get(reverse("alquileres:lista"), {"q": ataque_lista})
     assert respuesta.status_code == 200
@@ -214,6 +222,7 @@ def test_tc02_sqli_en_lista_y_en_disponibilidad_no_da_error_ni_filtra_datos(clie
 @pytest.mark.xss
 @pytest.mark.parametrize("payload", PAYLOADS_XSS)
 def test_tc03_xss_reflejado_en_la_lista_se_escapa(cliente_agente, payload):
+    """TC-03 (XSS reflejado): el parámetro q de la lista se escapa en el HTML."""
     respuesta = cliente_agente.get(reverse("alquileres:lista"), {"q": payload[:20]})
     html = respuesta.content.decode()
     assert respuesta.status_code == 200
@@ -225,6 +234,7 @@ def test_tc03_xss_reflejado_en_la_lista_se_escapa(cliente_agente, payload):
 # 10 --------------------------------------------------------------------------
 @pytest.mark.csrf
 def test_devolucion_sin_token_csrf_es_rechazada_y_el_alquiler_sigue_activo(agente, login_csrf):
+    """CSRF (UTN-07d): una devolución sin token es rechazada y el alquiler sigue ACTIVO."""
     alquiler = alquilar(crear_vehiculo(), crear_cliente(), agente, 0, 3)
 
     respuesta = login_csrf(agente).post(reverse("alquileres:devolucion", args=[alquiler.pk]))
@@ -237,6 +247,7 @@ def test_devolucion_sin_token_csrf_es_rechazada_y_el_alquiler_sigue_activo(agent
 # 11 --------------------------------------------------------------------------
 @pytest.mark.negocio
 def test_crear_ignora_total_dias_y_estado_enviados_por_el_usuario(cliente_agente):
+    """Asignación masiva: total, días, estado y tarifa enviados por el usuario se ignoran."""
     vehiculo, cliente = crear_vehiculo(tarifa="25000"), crear_cliente()
 
     respuesta = cliente_agente.post(

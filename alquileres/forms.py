@@ -66,3 +66,28 @@ class DisponibilidadForm(forms.Form):
             if (fin - inicio).days > self.RANGO_MAXIMO_DIAS:
                 raise forms.ValidationError(f"El rango máximo de consulta es de {self.RANGO_MAXIMO_DIAS} días.")
         return datos
+
+
+class ReporteIngresosForm(forms.Form):
+    """RFD-9.5. Consulta GET: el rango se valida antes de tocar la base de datos."""
+
+    RANGO_MAXIMO_DIAS = 366
+
+    desde = forms.DateField(
+        label="Desde",
+        widget=forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
+    )
+    hasta = forms.DateField(
+        label="Hasta",
+        widget=forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
+    )
+
+    def clean(self):
+        datos = super().clean()
+        desde, hasta = datos.get("desde"), datos.get("hasta")
+        if desde and hasta:
+            if hasta < desde:
+                raise forms.ValidationError("La fecha final no puede ser anterior a la fecha inicial.")
+            if (hasta - desde).days > self.RANGO_MAXIMO_DIAS:
+                raise forms.ValidationError(f"El rango máximo del reporte es de {self.RANGO_MAXIMO_DIAS} días.")
+        return datos

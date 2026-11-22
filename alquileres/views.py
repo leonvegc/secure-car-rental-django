@@ -6,20 +6,22 @@ alquileres/servicios.py, donde vive la lógica de negocio. Cada vista exige un
 permiso ANTES de cualquier otra cosa (el decorador de permiso va por fuera).
 """
 
+from decimal import Decimal
 from urllib.parse import urlencode
 
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db import IntegrityError
-from django.db.models import Q
+from django.db.models import Count, Q, Sum
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_GET, require_http_methods, require_POST
 
 from core.auditoria import registrar_evento
 from core.models import RegistroAuditoria
 from core.permisos import requiere_permiso
+from vehiculos.models import Vehiculo
 
-from .forms import CrearAlquilerForm, DisponibilidadForm, FiltroAlquileresForm
+from .forms import CrearAlquilerForm, DisponibilidadForm, FiltroAlquileresForm, ReporteIngresosForm
 from .models import Alquiler
 from .servicios import (
     ReglaNegocioError,
@@ -150,7 +152,39 @@ def disponibilidad(request):
     return render(request, "alquileres/disponibilidad.html", contexto)
 
 
-# Marcador: se reemplaza en el paso 6 (ingresos).
+MAX_FILAS_DETALLE = 200
+
+
 @requiere_permiso("reportes.ver_reportes")
+@require_GET
 def reporte_ingresos(request):
-    return render(request, "core/en_construccion.html", {"titulo": "Reporte de ingresos"})
+    """
+    RFD-9.5: ingresos de los alquileres cuya fecha de inicio cae en el rango.
+    Es un dato sensible del negocio: solo reportes.ver_reportes (el Auditor no).
+    """
+    consultado = "desde" in request.GET or "hasta" in request.GET
+    form = ReporteIngresosForm(request.GET) if consultado else ReporteIngresosForm()
+    contexto = {"form": form, "reporte": None}
+    if consultado and form.is_valid():
+        desde, hasta = form.cleaned_data["desde"], form.cleaned_data["hasta"]
+        alquileres = _alquileres().filter(fecha_inicio__gte=desde, fecha_inicio__lte=hasta)
+        resumen = alquileres.aggregate(total=Sum("total"), cantidad=Count("id"))
+        etiquetas = dict(Vehiculo._meta.get_field("categoria").flatchoices)
+        por_categoria = [
+            {"categoria": etiquetas.get(fila["vehiculo__categoria"], fila["vehiculo__categoria"]), **fila}
+            for fila in alquileres.order_by()
+            .values("vehiculo__categoria")
+            .annotate(total=Sum("total"), cantidad=Count("id"))
+            .order_by("vehiculo__categoria")
+        ]
+        contexto["reporte"] = {
+            "desde": desde,
+            "hasta": hasta,
+            "total": resumen["total"] or Decimal("0"),
+            "cantidad": resumen["cantidad"],
+            "por_categoria": por_categoria,
+            "detalle": alquileres.order_by("fecha_inicio", "codigo")[:MAX_FILAS_DETALLE],
+            "recortado": resumen["cantidad"] > MAX_FILAS_DETALLE,
+            "max_filas": MAX_FILAS_DETALLE,
+        }
+    return render(request, "alquileres/reporte_ingresos.html", contexto)

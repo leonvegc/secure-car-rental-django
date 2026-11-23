@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% load seguridad %}
+{% block titulo %}Vehículo {{ vehiculo.placa }}{% endblock %}
+{% block contenido %}
+<h2>{{ vehiculo.placa }} <span class="etiqueta">{{ vehiculo.get_estado_display }}</span></h2>
+
+<article>
+  <dl>
+    <dt>Marca y modelo</dt>
+    <dd>{{ vehiculo.marca }} {{ vehiculo.modelo }}</dd>
+    <dt>Categoría</dt>
+    <dd>{{ vehiculo.get_categoria_display }}</dd>
+    <dt>Tarifa diaria</dt>
+    <dd>₡{{ vehiculo.tarifa_diaria|floatformat:"2g" }}</dd>
+  </dl>
+</article>
+
+<div class="tabla-acciones">
+  <a href="{% url 'vehiculos:lista' %}" role="button" class="secondary outline">Volver a la lista</a>
+  {% if permisos_usuario|tiene:"vehiculos.editar" %}
+  <a href="{% url 'vehiculos:editar' vehiculo.pk %}" role="button">Editar</a>
+  {% endif %}
+</div>
+{% endblock %}

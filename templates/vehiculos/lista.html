@@ -1,7 +1,12 @@
 {% extends "base.html" %}
+{% load seguridad %}
 {% block titulo %}Vehículos{% endblock %}
 {% block contenido %}
 <h2>Vehículos</h2>
+
+{% if permisos_usuario|tiene:"vehiculos.crear" %}
+<p><a href="{% url 'vehiculos:crear' %}" role="button">Nuevo vehículo</a></p>
+{% endif %}
 
 <form method="get">
   {{ filtro.as_div }}
@@ -20,17 +25,21 @@
         <th>Categoría</th>
         <th>Tarifa diaria</th>
         <th>Estado</th>
+        <th></th>
       </tr>
     </thead>
     <tbody>
       {% for v in pagina %}
       <tr>
-        <td>{{ v.placa }}</td>
+        <td><a href="{% url 'vehiculos:detalle' v.pk %}">{{ v.placa }}</a></td>
         <td>{{ v.marca }}</td>
         <td>{{ v.modelo }}</td>
         <td>{{ v.get_categoria_display }}</td>
         <td>₡{{ v.tarifa_diaria|floatformat:"2g" }}</td>
         <td><span class="etiqueta">{{ v.get_estado_display }}</span></td>
+        <td class="tabla-acciones">
+          {% if permisos_usuario|tiene:"vehiculos.editar" %}<a href="{% url 'vehiculos:editar' v.pk %}" role="button" class="secondary">Editar</a>{% endif %}
+        </td>
       </tr>
       {% endfor %}
     </tbody>

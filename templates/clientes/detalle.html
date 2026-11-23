@@ -28,6 +28,9 @@
   {% if permisos_usuario|tiene:"clientes.editar" %}
   <a href="{% url 'clientes:editar' cliente.pk %}" role="button">Editar</a>
   {% endif %}
+  {% if permisos_usuario|tiene:"clientes.borrar" %}
+  <a href="{% url 'clientes:borrar' cliente.pk %}" role="button" class="contrast">Borrar</a>
+  {% endif %}
 </div>
 
 <h3>Historial de alquileres</h3>

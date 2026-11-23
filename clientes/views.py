@@ -9,7 +9,7 @@ from urllib.parse import urlencode
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db import IntegrityError, transaction
-from django.db.models import Q
+from django.db.models import ProtectedError, Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_GET, require_http_methods
@@ -85,3 +85,21 @@ def crear(request):
 def editar(request, pk):
     cliente = get_object_or_404(Cliente, pk=pk)
     return _guardar(request, cliente, "editado", "Editar cliente")
+
+
+@requiere_permiso("clientes.borrar")
+@require_http_methods(["GET", "POST"])
+def borrar(request, pk):
+    """GET muestra la confirmación; solo el POST (con token CSRF) borra."""
+    cliente = get_object_or_404(Cliente, pk=pk)
+    if request.method == "POST":
+        cedula = cliente.cedula
+        try:
+            cliente.delete()
+        except ProtectedError:  # los alquileres usan PROTECT: conservan su historial
+            messages.error(request, "No se puede borrar: el cliente tiene alquileres registrados.")
+            return redirect("clientes:detalle", pk=pk)
+        registrar_evento(request, RegistroAuditoria.Tipo.OPERACION, detalle=f"Cliente {cedula} borrado")
+        messages.success(request, f"Cliente {cedula} borrado.")
+        return redirect("clientes:lista")
+    return render(request, "clientes/borrar_confirmar.html", {"cliente": cliente})

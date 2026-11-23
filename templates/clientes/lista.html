@@ -40,6 +40,7 @@
         <td>{{ c.telefono|default:"—" }}</td>
         <td class="tabla-acciones">
           {% if permisos_usuario|tiene:"clientes.editar" %}<a href="{% url 'clientes:editar' c.pk %}" role="button" class="secondary">Editar</a>{% endif %}
+          {% if permisos_usuario|tiene:"clientes.borrar" %}<a href="{% url 'clientes:borrar' c.pk %}" role="button" class="contrast">Borrar</a>{% endif %}
         </td>
       </tr>
       {% endfor %}

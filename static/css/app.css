@@ -15,3 +15,6 @@ body > header nav { border-bottom: 1px solid var(--pico-muted-border-color); }
 .errorlist { color: #b00020; list-style: none; padding-left: 0; font-size: .9rem; }
 .centrado { max-width: 28rem; margin: 3rem auto; }
 .etiqueta { padding: .1rem .5rem; border-radius: 1rem; font-size: .8rem; background: var(--pico-secondary-background); color: var(--pico-secondary-inverse); }
+
+/* Licencia vencida en la lista de clientes */
+.vencida { color: #b00020; font-weight: 600; }

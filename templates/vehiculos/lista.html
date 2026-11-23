@@ -39,6 +39,7 @@
         <td><span class="etiqueta">{{ v.get_estado_display }}</span></td>
         <td class="tabla-acciones">
           {% if permisos_usuario|tiene:"vehiculos.editar" %}<a href="{% url 'vehiculos:editar' v.pk %}" role="button" class="secondary">Editar</a>{% endif %}
+          {% if permisos_usuario|tiene:"vehiculos.borrar" %}<a href="{% url 'vehiculos:borrar' v.pk %}" role="button" class="contrast">Borrar</a>{% endif %}
         </td>
       </tr>
       {% endfor %}

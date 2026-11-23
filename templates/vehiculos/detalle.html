@@ -20,5 +20,8 @@
   {% if permisos_usuario|tiene:"vehiculos.editar" %}
   <a href="{% url 'vehiculos:editar' vehiculo.pk %}" role="button">Editar</a>
   {% endif %}
+  {% if permisos_usuario|tiene:"vehiculos.borrar" %}
+  <a href="{% url 'vehiculos:borrar' vehiculo.pk %}" role="button" class="contrast">Borrar</a>
+  {% endif %}
 </div>
 {% endblock %}

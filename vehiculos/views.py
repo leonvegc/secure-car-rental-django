@@ -10,6 +10,7 @@ from urllib.parse import urlencode
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db import IntegrityError, transaction
+from django.db.models import ProtectedError
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_GET, require_http_methods
@@ -81,3 +82,21 @@ def crear(request):
 def editar(request, pk):
     vehiculo = get_object_or_404(Vehiculo, pk=pk)
     return _guardar(request, vehiculo, "editado", "Editar vehículo")
+
+
+@requiere_permiso("vehiculos.borrar")
+@require_http_methods(["GET", "POST"])
+def borrar(request, pk):
+    """GET muestra la confirmación; solo el POST (con token CSRF) borra."""
+    vehiculo = get_object_or_404(Vehiculo, pk=pk)
+    if request.method == "POST":
+        placa = vehiculo.placa
+        try:
+            vehiculo.delete()
+        except ProtectedError:  # los alquileres usan PROTECT: conservan su historial
+            messages.error(request, "No se puede borrar: el vehículo tiene alquileres registrados.")
+            return redirect("vehiculos:detalle", pk=pk)
+        registrar_evento(request, RegistroAuditoria.Tipo.OPERACION, detalle=f"Vehículo {placa} borrado")
+        messages.success(request, f"Vehículo {placa} borrado.")
+        return redirect("vehiculos:lista")
+    return render(request, "vehiculos/borrar_confirmar.html", {"vehiculo": vehiculo})

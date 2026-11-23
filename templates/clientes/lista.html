@@ -21,6 +21,7 @@
       <tr>
         <th>Cédula</th>
         <th>Nombre</th>
+        <th>Licencia</th>
         <th>Vencimiento de licencia</th>
         <th>Teléfono</th>
         <th></th>
@@ -29,8 +30,9 @@
     <tbody>
       {% for c in pagina %}
       <tr>
-        <td>{{ c.cedula }}</td>
+        <td><a href="{% url 'clientes:detalle' c.pk %}">{{ c.cedula }}</a></td>
         <td>{{ c.nombre_completo }}</td>
+        <td>{{ c.numero_licencia|enmascarar }}</td>
         <td>
           {% if c.vencimiento_licencia < hoy %}<span class="vencida">{{ c.vencimiento_licencia|date:"d/m/Y" }} (vencida)</span>
           {% else %}{{ c.vencimiento_licencia|date:"d/m/Y" }}{% endif %}

@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% load seguridad %}
+{% block titulo %}Cliente {{ cliente.cedula }}{% endblock %}
+{% block contenido %}
+<h2>{{ cliente.nombre_completo }}</h2>
+
+<article>
+  <dl>
+    <dt>Cédula</dt>
+    <dd>{{ cliente.cedula }}</dd>
+    <dt>Número de licencia</dt>
+    {# Dato sensible: completo solo con permiso de edición; si no, enmascarado #}
+    <dd>{% if permisos_usuario|tiene:"clientes.editar" %}{{ cliente.numero_licencia }}{% else %}{{ cliente.numero_licencia|enmascarar }}{% endif %}</dd>
+    <dt>Vencimiento de la licencia</dt>
+    <dd>
+      {% if cliente.vencimiento_licencia < hoy %}<span class="vencida">{{ cliente.vencimiento_licencia|date:"d/m/Y" }} (vencida)</span>
+      {% else %}{{ cliente.vencimiento_licencia|date:"d/m/Y" }}{% endif %}
+    </dd>
+    <dt>Teléfono</dt>
+    <dd>{{ cliente.telefono|default:"—" }}</dd>
+    <dt>Correo</dt>
+    <dd>{{ cliente.correo|default:"—" }}</dd>
+  </dl>
+</article>
+
+<div class="tabla-acciones">
+  <a href="{% url 'clientes:lista' %}" role="button" class="secondary outline">Volver a la lista</a>
+  {% if permisos_usuario|tiene:"clientes.editar" %}
+  <a href="{% url 'clientes:editar' cliente.pk %}" role="button">Editar</a>
+  {% endif %}
+</div>
+
+<h3>Historial de alquileres</h3>
+{% if alquileres %}
+<div class="overflow-auto">
+  <table>
+    <thead>
+      <tr>
+        <th>Código</th>
+        <th>Vehículo</th>
+        <th>Inicio</th>
+        <th>Fin</th>
+        <th>Total</th>
+        <th>Estado</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for a in alquileres %}
+      <tr>
+        <td>{{ a.codigo }}</td>
+        <td>{{ a.vehiculo.placa }} - {{ a.vehiculo.marca }} {{ a.vehiculo.modelo }}</td>
+        <td>{{ a.fecha_inicio|date:"d/m/Y" }}</td>
+        <td>{{ a.fecha_fin|date:"d/m/Y" }}</td>
+        <td>₡{{ a.total|floatformat:"2g" }}</td>
+        <td><span class="etiqueta">{{ a.get_estado_display }}</span></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<p>Este cliente no tiene alquileres registrados.</p>
+{% endif %}
+{% endblock %}

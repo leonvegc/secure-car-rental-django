@@ -45,6 +45,18 @@ def lista(request):
     return render(request, "clientes/lista.html", contexto)
 
 
+@requiere_permiso("clientes.ver")
+@require_GET
+def detalle(request, pk):
+    cliente = get_object_or_404(Cliente, pk=pk)
+    contexto = {
+        "cliente": cliente,
+        "alquileres": cliente.alquileres.select_related("vehiculo"),  # historial del cliente
+        "hoy": timezone.localdate(),
+    }
+    return render(request, "clientes/detalle.html", contexto)
+
+
 def _guardar(request, cliente, accion, titulo):
     """Lógica común de crear y editar: muestra el formulario o guarda y audita."""
     datos = request.POST if request.method == "POST" else None

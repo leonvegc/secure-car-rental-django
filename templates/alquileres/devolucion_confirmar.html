@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block titulo %}Devolución {{ alquiler.codigo }}{% endblock %}
+{% block contenido %}
+<h2>Registrar devolución</h2>
+<article>
+  <p>
+    Alquiler <strong>{{ alquiler.codigo }}</strong> de {{ alquiler.cliente.nombre_completo }}:
+    vehículo {{ alquiler.vehiculo.placa }}, del {{ alquiler.fecha_inicio|date:"d/m/Y" }}
+    al {{ alquiler.fecha_fin|date:"d/m/Y" }}, total ₡{{ alquiler.total|floatformat:"2g" }}.
+  </p>
+  <p>Al confirmar, el alquiler quedará finalizado y el vehículo volverá a estar disponible.</p>
+</article>
+
+<form method="post" action="{% url 'alquileres:devolucion' alquiler.pk %}">
+  {% csrf_token %}
+  <button type="submit">Confirmar devolución</button>
+  <a href="{% url 'alquileres:detalle' alquiler.pk %}" role="button" class="secondary outline">Cancelar</a>
+</form>
+{% endblock %}

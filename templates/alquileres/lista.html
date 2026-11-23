@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% load seguridad %}
+{% block titulo %}Alquileres{% endblock %}
+{% block contenido %}
+<h2>Alquileres</h2>
+
+{% if permisos_usuario|tiene:"alquileres.crear" %}
+<p><a href="{% url 'alquileres:crear' %}" role="button">Nuevo alquiler</a></p>
+{% endif %}
+
+<form method="get">
+  {{ filtro.as_div }}
+  <button type="submit">Filtrar</button>
+  <a href="{% url 'alquileres:lista' %}" role="button" class="secondary outline">Limpiar</a>
+</form>
+
+{% if pagina.object_list %}
+<div class="overflow-auto">
+  <table>
+    <thead>
+      <tr>
+        <th>Código</th>
+        <th>Cliente</th>
+        <th>Placa</th>
+        <th>Inicio</th>
+        <th>Fin</th>
+        <th>Días</th>
+        <th>Total</th>
+        <th>Estado</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for a in pagina %}
+      <tr>
+        <td><a href="{% url 'alquileres:detalle' a.pk %}">{{ a.codigo }}</a></td>
+        <td>{{ a.cliente.nombre_completo }}</td>
+        <td>{{ a.vehiculo.placa }}</td>
+        <td>{{ a.fecha_inicio|date:"d/m/Y" }}</td>
+        <td>{{ a.fecha_fin|date:"d/m/Y" }}</td>
+        <td>{{ a.dias }}</td>
+        <td>₡{{ a.total|floatformat:"2g" }}</td>
+        <td><span class="etiqueta">{{ a.get_estado_display }}</span></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if pagina.has_other_pages %}
+<nav aria-label="Paginación">
+  <ul>
+    {% if pagina.has_previous %}
+    <li><a href="?page={{ pagina.previous_page_number }}{% if parametros_url %}&amp;{{ parametros_url }}{% endif %}">Anterior</a></li>
+    {% endif %}
+    <li>Página {{ pagina.number }} de {{ pagina.paginator.num_pages }}</li>
+    {% if pagina.has_next %}
+    <li><a href="?page={{ pagina.next_page_number }}{% if parametros_url %}&amp;{{ parametros_url }}{% endif %}">Siguiente</a></li>
+    {% endif %}
+  </ul>
+</nav>
+{% endif %}
+{% else %}
+<p>No hay alquileres que coincidan con la búsqueda.</p>
+{% endif %}
+{% endblock %}

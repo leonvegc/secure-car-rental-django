@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% load seguridad %}
+{% block titulo %}Alquiler {{ alquiler.codigo }}{% endblock %}
+{% block contenido %}
+<h2>Alquiler {{ alquiler.codigo }} <span class="etiqueta">{{ alquiler.get_estado_display }}</span></h2>
+
+<article>
+  <dl>
+    <dt>Cliente</dt>
+    <dd>{{ alquiler.cliente.nombre_completo }} (cédula {{ alquiler.cliente.cedula }})</dd>
+    <dt>Vehículo</dt>
+    <dd>{{ alquiler.vehiculo.placa }} - {{ alquiler.vehiculo.marca }} {{ alquiler.vehiculo.modelo }} ({{ alquiler.vehiculo.get_categoria_display }})</dd>
+    <dt>Período</dt>
+    <dd>{{ alquiler.fecha_inicio|date:"d/m/Y" }} al {{ alquiler.fecha_fin|date:"d/m/Y" }} ({{ alquiler.dias }} días)</dd>
+    <dt>Tarifa diaria</dt>
+    <dd>₡{{ alquiler.tarifa_diaria|floatformat:"2g" }}</dd>
+    <dt>Total</dt>
+    <dd><strong>₡{{ alquiler.total|floatformat:"2g" }}</strong></dd>
+    <dt>Registrado por</dt>
+    <dd>{{ alquiler.registrado_por.nombre_completo|default:"—" }}</dd>
+    {% if alquiler.fecha_devolucion %}
+    <dt>Devuelto el</dt>
+    <dd>{{ alquiler.fecha_devolucion|date:"d/m/Y H:i" }}, recibido por {{ alquiler.recibido_por.nombre_completo|default:"—" }}</dd>
+    {% endif %}
+  </dl>
+</article>
+
+<div class="tabla-acciones">
+  <a href="{% url 'alquileres:lista' %}" role="button" class="secondary outline">Volver a la lista</a>
+  {% if alquiler.estado == "ACTIVO" %}
+    {% if permisos_usuario|tiene:"alquileres.editar" %}
+    <a href="{% url 'alquileres:devolucion' alquiler.pk %}" role="button">Registrar devolución</a>
+    {% endif %}
+    {% if permisos_usuario|tiene:"alquileres.borrar" %}
+    <form method="post" action="{% url 'alquileres:anular' alquiler.pk %}">
+      {% csrf_token %}
+      <button type="submit" class="contrast">Anular alquiler</button>
+    </form>
+    {% endif %}
+  {% endif %}
+</div>
+{% endblock %}

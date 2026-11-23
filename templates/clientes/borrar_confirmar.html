@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block titulo %}Borrar cliente{% endblock %}
+{% block contenido %}
+<h2>Borrar cliente</h2>
+<article>
+  <p>
+    ¿Desea borrar al cliente <strong>{{ cliente.nombre_completo }}</strong>
+    (cédula {{ cliente.cedula }})? Esta acción no se puede deshacer.
+  </p>
+</article>
+
+<form method="post">
+  {% csrf_token %}
+  <button type="submit" class="contrast">Sí, borrar</button>
+  <a href="{% url 'clientes:detalle' cliente.pk %}" role="button" class="secondary outline">Cancelar</a>
+</form>
+{% endblock %}

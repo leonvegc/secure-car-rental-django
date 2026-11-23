@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% load seguridad %}
+{% block titulo %}Clientes{% endblock %}
+{% block contenido %}
+<h2>Clientes</h2>
+
+{% if permisos_usuario|tiene:"clientes.crear" %}
+<p><a href="{% url 'clientes:crear' %}" role="button">Nuevo cliente</a></p>
+{% endif %}
+
+<form method="get">
+  {{ filtro.as_div }}
+  <button type="submit">Buscar</button>
+  <a href="{% url 'clientes:lista' %}" role="button" class="secondary outline">Limpiar</a>
+</form>
+
+{% if pagina.object_list %}
+<div class="overflow-auto">
+  <table>
+    <thead>
+      <tr>
+        <th>Cédula</th>
+        <th>Nombre</th>
+        <th>Licencia</th>
+        <th>Vencimiento de licencia</th>
+        <th>Teléfono</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for c in pagina %}
+      <tr>
+        <td><a href="{% url 'clientes:detalle' c.pk %}">{{ c.cedula }}</a></td>
+        <td>{{ c.nombre_completo }}</td>
+        <td>{{ c.numero_licencia|enmascarar }}</td>
+        <td>
+          {% if c.vencimiento_licencia < hoy %}<span class="vencida">{{ c.vencimiento_licencia|date:"d/m/Y" }} (vencida)</span>
+          {% else %}{{ c.vencimiento_licencia|date:"d/m/Y" }}{% endif %}
+        </td>
+        <td>{{ c.telefono|default:"—" }}</td>
+        <td class="tabla-acciones">
+          {% if permisos_usuario|tiene:"clientes.editar" %}<a href="{% url 'clientes:editar' c.pk %}" role="button" class="secondary">Editar</a>{% endif %}
+          {% if permisos_usuario|tiene:"clientes.borrar" %}<a href="{% url 'clientes:borrar' c.pk %}" role="button" class="contrast">Borrar</a>{% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if pagina.has_other_pages %}
+<nav aria-label="Paginación">
+  <ul>
+    {% if pagina.has_previous %}
+    <li><a href="?page={{ pagina.previous_page_number }}{% if parametros_url %}&amp;{{ parametros_url }}{% endif %}">Anterior</a></li>
+    {% endif %}
+    <li>Página {{ pagina.number }} de {{ pagina.paginator.num_pages }}</li>
+    {% if pagina.has_next %}
+    <li><a href="?page={{ pagina.next_page_number }}{% if parametros_url %}&amp;{{ parametros_url }}{% endif %}">Siguiente</a></li>
+    {% endif %}
+  </ul>
+</nav>
+{% endif %}
+{% else %}
+<p>No hay clientes que coincidan con la búsqueda.</p>
+{% endif %}
+{% endblock %}

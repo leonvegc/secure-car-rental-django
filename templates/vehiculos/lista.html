@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% load seguridad %}
+{% block titulo %}Vehículos{% endblock %}
+{% block contenido %}
+<h2>Vehículos</h2>
+
+{% if permisos_usuario|tiene:"vehiculos.crear" %}
+<p><a href="{% url 'vehiculos:crear' %}" role="button">Nuevo vehículo</a></p>
+{% endif %}
+
+<form method="get">
+  {{ filtro.as_div }}
+  <button type="submit">Filtrar</button>
+  <a href="{% url 'vehiculos:lista' %}" role="button" class="secondary outline">Limpiar</a>
+</form>
+
+{% if pagina.object_list %}
+<div class="overflow-auto">
+  <table>
+    <thead>
+      <tr>
+        <th>Placa</th>
+        <th>Marca</th>
+        <th>Modelo</th>
+        <th>Categoría</th>
+        <th>Tarifa diaria</th>
+        <th>Estado</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for v in pagina %}
+      <tr>
+        <td><a href="{% url 'vehiculos:detalle' v.pk %}">{{ v.placa }}</a></td>
+        <td>{{ v.marca }}</td>
+        <td>{{ v.modelo }}</td>
+        <td>{{ v.get_categoria_display }}</td>
+        <td>₡{{ v.tarifa_diaria|floatformat:"2g" }}</td>
+        <td><span class="etiqueta">{{ v.get_estado_display }}</span></td>
+        <td class="tabla-acciones">
+          {% if permisos_usuario|tiene:"vehiculos.editar" %}<a href="{% url 'vehiculos:editar' v.pk %}" role="button" class="secondary">Editar</a>{% endif %}
+          {% if permisos_usuario|tiene:"vehiculos.borrar" %}<a href="{% url 'vehiculos:borrar' v.pk %}" role="button" class="contrast">Borrar</a>{% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if pagina.has_other_pages %}
+<nav aria-label="Paginación">
+  <ul>
+    {% if pagina.has_previous %}
+    <li><a href="?page={{ pagina.previous_page_number }}{% if parametros_url %}&amp;{{ parametros_url }}{% endif %}">Anterior</a></li>
+    {% endif %}
+    <li>Página {{ pagina.number }} de {{ pagina.paginator.num_pages }}</li>
+    {% if pagina.has_next %}
+    <li><a href="?page={{ pagina.next_page_number }}{% if parametros_url %}&amp;{{ parametros_url }}{% endif %}">Siguiente</a></li>
+    {% endif %}
+  </ul>
+</nav>
+{% endif %}
+{% else %}
+<p>No hay vehículos que coincidan con la búsqueda.</p>
+{% endif %}
+{% endblock %}

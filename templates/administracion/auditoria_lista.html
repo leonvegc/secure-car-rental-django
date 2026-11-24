@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block titulo %}Registro de auditoría{% endblock %}
+{% block contenido %}
+<h2>Registro de auditoría</h2>
+<p>Vista de solo lectura. Los registros de auditoría no se pueden modificar ni eliminar.</p>
+
+<form method="get">
+  {{ filtro.as_div }}
+  <button type="submit">Filtrar</button>
+  <a href="{% url 'administracion:auditoria_lista' %}" role="button" class="secondary outline">Limpiar</a>
+</form>
+
+{% if pagina.object_list %}
+<div class="overflow-auto">
+  <table>
+    <thead>
+      <tr>
+        <th>Fecha y hora</th>
+        <th>Tipo</th>
+        <th>Usuario</th>
+        <th>IP</th>
+        <th>Método</th>
+        <th>Ruta</th>
+        <th>Detalle</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in pagina %}
+      <tr>
+        <td>{{ r.fecha_hora|date:"d/m/Y H:i:s" }}</td>
+        <td><span class="etiqueta">{{ r.get_tipo_display }}</span></td>
+        <td>{{ r.username|default:"—" }}</td>
+        <td>{{ r.ip|default:"—" }}</td>
+        <td>{{ r.metodo|default:"—" }}</td>
+        <td>{{ r.ruta|default:"—" }}</td>
+        <td>{{ r.detalle|default:"—" }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if pagina.has_other_pages %}
+<nav aria-label="Paginación">
+  <ul>
+    {% if pagina.has_previous %}
+    <li><a href="?page={{ pagina.previous_page_number }}{% if parametros_url %}&amp;{{ parametros_url }}{% endif %}">Anterior</a></li>
+    {% endif %}
+    <li>Página {{ pagina.number }} de {{ pagina.paginator.num_pages }}</li>
+    {% if pagina.has_next %}
+    <li><a href="?page={{ pagina.next_page_number }}{% if parametros_url %}&amp;{{ parametros_url }}{% endif %}">Siguiente</a></li>
+    {% endif %}
+  </ul>
+</nav>
+{% endif %}
+{% else %}
+<p>No hay registros de auditoría que coincidan con los filtros.</p>
+{% endif %}
+{% endblock %}

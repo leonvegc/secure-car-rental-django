@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% load seguridad %}
+{% block titulo %}Roles y permisos{% endblock %}
+{% block contenido %}
+<h2>Roles y permisos</h2>
+
+{% if permisos_usuario|tiene:"roles.crear" %}
+<p><a href="{% url 'administracion:roles_crear' %}" role="button">Nuevo rol</a></p>
+{% endif %}
+
+{% if roles %}
+<div class="overflow-auto">
+  <table>
+    <thead>
+      <tr>
+        <th>Nombre</th>
+        <th>Descripción</th>
+        <th>Usuarios</th>
+        <th>Permisos</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in roles %}
+      <tr>
+        <td>
+          <strong>{{ r.nombre }}</strong>
+          {% if r.es_sistema %}<span class="etiqueta">Sistema</span>{% endif %}
+        </td>
+        <td>{{ r.descripcion|default:"—" }}</td>
+        <td>{{ r.cantidad_usuarios }}</td>
+        <td>
+          {% for p in r.permisos.all %}{{ p }}{% if not forloop.last %}, {% endif %}{% empty %}Sin permisos{% endfor %}
+        </td>
+        <td class="tabla-acciones">
+          {% if permisos_usuario|tiene:"roles.editar" %}
+          <a href="{% url 'administracion:roles_editar' r.pk %}" role="button" class="secondary">Editar</a>
+          {% endif %}
+          {% if permisos_usuario|tiene:"roles.borrar" and not r.es_sistema %}
+          <a href="{% url 'administracion:roles_borrar' r.pk %}" role="button" class="contrast">Borrar</a>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<p>No hay roles registrados.</p>
+{% endif %}
+{% endblock %}

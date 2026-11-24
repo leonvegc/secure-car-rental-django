@@ -19,7 +19,7 @@ from core.permisos import requiere_permiso, solo_superadmin
 from cuentas.models import Rol, Usuario
 
 from .forms import FiltroUsuariosForm, RolForm, UsuarioCrearForm, UsuarioEditarForm
-from .servicios import es_ultimo_superadmin_activo
+from .servicios import es_ultimo_superadmin_activo, resumen_cambios_permisos
 
 
 @requiere_permiso("usuarios.ver")
@@ -80,6 +80,7 @@ def usuarios_editar(request, pk):
     usuario = get_object_or_404(Usuario.objects.select_related("rol"), pk=pk)
     if usuario.rol.es_superadmin and not request.user.es_superadmin:
         raise PermissionDenied("Solo un SuperAdmin puede editar cuentas SuperAdmin.")
+    rol_anterior = usuario.rol.nombre
     form = UsuarioEditarForm(request.POST or None, instance=usuario, actor=request.user)
     if request.method == "POST" and form.is_valid():
         try:
@@ -93,6 +94,12 @@ def usuarios_editar(request, pk):
                 RegistroAuditoria.Tipo.GESTION_USUARIO,
                 detalle=f"Usuario {usuario.username} editado",
             )
+            if rol_anterior != usuario.rol.nombre:
+                registrar_evento(
+                    request,
+                    RegistroAuditoria.Tipo.CAMBIO_ROL,
+                    detalle=f"Usuario {usuario.username}: rol '{rol_anterior}' -> '{usuario.rol.nombre}'",
+                )
             messages.success(request, f"Usuario {usuario.username} actualizado.")
             return redirect("administracion:usuarios_detalle", pk=usuario.pk)
     return render(
@@ -160,6 +167,19 @@ def roles_crear(request):
         except IntegrityError:
             messages.error(request, "No se pudo guardar el rol. Revise los datos ingresados.")
         else:
+            registrar_evento(
+                request,
+                RegistroAuditoria.Tipo.GESTION_ROL,
+                detalle=f"Rol {rol.nombre} creado",
+            )
+            permisos_nuevos = set(rol.permisos.values_list("codigo", flat=True))
+            if permisos_nuevos:
+                agregados, quitados = resumen_cambios_permisos(set(), permisos_nuevos)
+                registrar_evento(
+                    request,
+                    RegistroAuditoria.Tipo.CAMBIO_PERMISOS,
+                    detalle=f"Rol {rol}: +[{agregados}] -[{quitados}]",
+                )
             messages.success(request, f"Rol {rol.nombre} creado.")
             return redirect("administracion:roles_lista")
     return render(request, "administracion/rol_form.html", {"form": form, "titulo": "Nuevo rol"})
@@ -170,6 +190,7 @@ def roles_crear(request):
 @require_http_methods(["GET", "POST"])
 def roles_editar(request, pk):
     rol = get_object_or_404(Rol.objects.prefetch_related("permisos"), pk=pk)
+    permisos_antes = set(rol.permisos.values_list("codigo", flat=True))
     form = RolForm(request.POST or None, instance=rol)
     if request.method == "POST" and form.is_valid():
         try:
@@ -178,6 +199,19 @@ def roles_editar(request, pk):
         except IntegrityError:
             messages.error(request, "No se pudo actualizar el rol. Revise los datos ingresados.")
         else:
+            registrar_evento(
+                request,
+                RegistroAuditoria.Tipo.GESTION_ROL,
+                detalle=f"Rol {rol.nombre} editado",
+            )
+            permisos_despues = set(rol.permisos.values_list("codigo", flat=True))
+            if permisos_antes != permisos_despues:
+                agregados, quitados = resumen_cambios_permisos(permisos_antes, permisos_despues)
+                registrar_evento(
+                    request,
+                    RegistroAuditoria.Tipo.CAMBIO_PERMISOS,
+                    detalle=f"Rol {rol}: +[{agregados}] -[{quitados}]",
+                )
             messages.success(request, f"Rol {rol.nombre} actualizado.")
             return redirect("administracion:roles_lista")
     return render(
@@ -210,6 +244,11 @@ def roles_borrar(request, pk):
         except ProtectedError:
             messages.error(request, "No se puede borrar el rol porque tiene usuarios asignados.")
             return redirect("administracion:roles_lista")
+        registrar_evento(
+            request,
+            RegistroAuditoria.Tipo.GESTION_ROL,
+            detalle=f"Rol {nombre} borrado",
+        )
         messages.success(request, f"Rol {nombre} borrado.")
         return redirect("administracion:roles_lista")
 

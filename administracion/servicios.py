@@ -37,3 +37,10 @@ def es_ultimo_superadmin_activo(usuario):
         is_active=True,
         rol__es_superadmin=True,
     ).exclude(pk=usuario.pk).exists()
+
+
+def resumen_cambios_permisos(antes, despues):
+    """Devuelve cadenas ordenadas de permisos agregados y quitados."""
+    agregados = ", ".join(sorted(despues - antes))
+    quitados = ", ".join(sorted(antes - despues))
+    return agregados, quitados

@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block titulo %}Borrar usuario{% endblock %}
+{% block contenido %}
+<h2>Borrar usuario</h2>
+<article>
+  <p>
+    ¿Desea borrar al usuario <strong>{{ usuario.username }}</strong>
+    ({{ usuario.nombre_completo }} — {{ usuario.rol.nombre }})? Esta acción no se puede deshacer.
+  </p>
+</article>
+
+<form method="post">
+  {% csrf_token %}
+  <button type="submit" class="contrast">Sí, borrar</button>
+  <a href="{% url 'administracion:usuarios_detalle' usuario.pk %}" role="button" class="secondary outline">Cancelar</a>
+</form>
+{% endblock %}

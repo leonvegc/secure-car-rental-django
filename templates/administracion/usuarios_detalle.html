@@ -36,5 +36,8 @@
   {% if permisos_usuario|tiene:"usuarios.editar" %}
   <a href="{% url 'administracion:usuarios_editar' usuario.pk %}" role="button">Editar</a>
   {% endif %}
+  {% if permisos_usuario|tiene:"usuarios.borrar" and usuario.pk != user.pk %}
+  <a href="{% url 'administracion:usuarios_borrar' usuario.pk %}" role="button" class="contrast">Borrar</a>
+  {% endif %}
 </div>
 {% endblock %}

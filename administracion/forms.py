@@ -5,6 +5,8 @@ from django.contrib.auth.password_validation import validate_password
 
 from cuentas.models import Usuario
 
+from .servicios import es_ultimo_superadmin_activo
+
 
 class EmailMinusculaField(forms.EmailField):
     """Normaliza el correo a minúsculas y sin espacios antes de validar unicidad."""
@@ -100,6 +102,32 @@ class UsuarioEditarForm(_UsuarioBaseForm):
         required=False,
         widget=forms.PasswordInput(attrs={"autocomplete": "new-password"}),
     )
+
+    def __init__(self, *args, actor=None, **kwargs):
+        self.actor = actor
+        super().__init__(*args, **kwargs)
+        self._rol_original_id = self.instance.rol_id
+        self._era_ultimo_superadmin = es_ultimo_superadmin_activo(self.instance)
+
+    def clean_rol(self):
+        rol = self.cleaned_data["rol"]
+        if self.actor and self.instance.pk == self.actor.pk and rol.pk != self._rol_original_id:
+            raise forms.ValidationError("No puede cambiar su propio rol.")
+        if self._era_ultimo_superadmin and not rol.es_superadmin:
+            raise forms.ValidationError(
+                "No puede cambiar el rol del último SuperAdmin activo del sistema."
+            )
+        return rol
+
+    def clean_is_active(self):
+        activo = self.cleaned_data["is_active"]
+        if self.actor and self.instance.pk == self.actor.pk and not activo:
+            raise forms.ValidationError("No puede desactivar su propia cuenta.")
+        if self._era_ultimo_superadmin and not activo:
+            raise forms.ValidationError(
+                "No puede desactivar al último SuperAdmin activo del sistema."
+            )
+        return activo
 
     def clean(self):
         datos = super().clean()

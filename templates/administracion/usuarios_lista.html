@@ -45,8 +45,8 @@
         <td>{% if u.is_active %}Sí{% else %}No{% endif %}</td>
         <td class="tabla-acciones">
           <a href="{% url 'administracion:usuarios_detalle' u.pk %}" role="button" class="secondary outline">Ver</a>
-          {% if permisos_usuario|tiene:"usuarios.editar" %}<a href="{% url 'administracion:usuarios_editar' u.pk %}" role="button" class="secondary">Editar</a>{% endif %}
-          {% if permisos_usuario|tiene:"usuarios.borrar" and u.pk != user.pk %}<a href="{% url 'administracion:usuarios_borrar' u.pk %}" role="button" class="contrast">Borrar</a>{% endif %}
+          {% if permisos_usuario|tiene:"usuarios.editar" %}{% if es_superadmin or not u.rol.es_superadmin %}<a href="{% url 'administracion:usuarios_editar' u.pk %}" role="button" class="secondary">Editar</a>{% endif %}{% endif %}
+          {% if permisos_usuario|tiene:"usuarios.borrar" and u.pk != user.pk %}{% if es_superadmin or not u.rol.es_superadmin %}<a href="{% url 'administracion:usuarios_borrar' u.pk %}" role="button" class="contrast">Borrar</a>{% endif %}{% endif %}
         </td>
       </tr>
       {% endfor %}

@@ -33,11 +33,11 @@
 
 <div class="tabla-acciones">
   <a href="{% url 'administracion:usuarios_lista' %}" role="button" class="secondary outline">Volver a la lista</a>
-  {% if permisos_usuario|tiene:"usuarios.editar" %}
+  {% if permisos_usuario|tiene:"usuarios.editar" %}{% if es_superadmin or not usuario.rol.es_superadmin %}
   <a href="{% url 'administracion:usuarios_editar' usuario.pk %}" role="button">Editar</a>
-  {% endif %}
-  {% if permisos_usuario|tiene:"usuarios.borrar" and usuario.pk != user.pk %}
+  {% endif %}{% endif %}
+  {% if permisos_usuario|tiene:"usuarios.borrar" and usuario.pk != user.pk %}{% if es_superadmin or not usuario.rol.es_superadmin %}
   <a href="{% url 'administracion:usuarios_borrar' usuario.pk %}" role="button" class="contrast">Borrar</a>
-  {% endif %}
+  {% endif %}{% endif %}
 </div>
 {% endblock %}

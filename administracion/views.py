@@ -6,6 +6,7 @@ UTN-04 usuarios, UTN-05/06 roles y permisos, UTN-09 visor de auditoría.
 from urllib.parse import urlencode
 
 from django.contrib import messages
+from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
 from django.db import IntegrityError, transaction
 from django.db.models import ProtectedError, Q
@@ -55,7 +56,7 @@ def usuarios_detalle(request, pk):
 @requiere_permiso("usuarios.crear")
 @require_http_methods(["GET", "POST"])
 def usuarios_crear(request):
-    form = UsuarioCrearForm(request.POST or None)
+    form = UsuarioCrearForm(request.POST or None, actor=request.user)
     if request.method == "POST" and form.is_valid():
         try:
             with transaction.atomic():
@@ -77,6 +78,8 @@ def usuarios_crear(request):
 @require_http_methods(["GET", "POST"])
 def usuarios_editar(request, pk):
     usuario = get_object_or_404(Usuario.objects.select_related("rol"), pk=pk)
+    if usuario.rol.es_superadmin and not request.user.es_superadmin:
+        raise PermissionDenied("Solo un SuperAdmin puede editar cuentas SuperAdmin.")
     form = UsuarioEditarForm(request.POST or None, instance=usuario, actor=request.user)
     if request.method == "POST" and form.is_valid():
         try:
@@ -104,6 +107,8 @@ def usuarios_editar(request, pk):
 def usuarios_borrar(request, pk):
     """GET muestra la confirmación; solo el POST (con token CSRF) borra."""
     usuario = get_object_or_404(Usuario.objects.select_related("rol"), pk=pk)
+    if usuario.rol.es_superadmin and not request.user.es_superadmin:
+        raise PermissionDenied("Solo un SuperAdmin puede borrar cuentas SuperAdmin.")
 
     if usuario.pk == request.user.pk:
         messages.error(request, "No puede borrar su propia cuenta.")

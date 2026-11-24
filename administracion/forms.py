@@ -3,7 +3,7 @@
 from django import forms
 from django.contrib.auth.password_validation import validate_password
 
-from cuentas.models import Usuario
+from cuentas.models import Rol, Usuario
 
 from .servicios import es_ultimo_superadmin_activo
 
@@ -39,6 +39,19 @@ class _UsuarioBaseForm(forms.ModelForm):
             "identificacion": {"unique": "Ya existe un usuario con esa identificación."},
             "email": {"unique": "Ya existe un usuario con ese correo."},
         }
+
+    def __init__(self, *args, actor=None, **kwargs):
+        self.actor = actor
+        super().__init__(*args, **kwargs)
+        # Anti-escalamiento: solo un SuperAdmin puede ver o asignar roles es_superadmin=True.
+        if not (self.actor and self.actor.es_superadmin):
+            self.fields["rol"].queryset = Rol.objects.filter(es_superadmin=False)
+
+    def clean_rol(self):
+        rol = self.cleaned_data["rol"]
+        if rol and rol.es_superadmin and not (self.actor and self.actor.es_superadmin):
+            raise forms.ValidationError("No tiene permiso para asignar un rol de SuperAdmin.")
+        return rol
 
     def clean_username(self):
         return self.cleaned_data["username"].strip()
@@ -104,13 +117,12 @@ class UsuarioEditarForm(_UsuarioBaseForm):
     )
 
     def __init__(self, *args, actor=None, **kwargs):
-        self.actor = actor
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, actor=actor, **kwargs)
         self._rol_original_id = self.instance.rol_id
         self._era_ultimo_superadmin = es_ultimo_superadmin_activo(self.instance)
 
     def clean_rol(self):
-        rol = self.cleaned_data["rol"]
+        rol = super().clean_rol()
         if self.actor and self.instance.pk == self.actor.pk and rol.pk != self._rol_original_id:
             raise forms.ValidationError("No puede cambiar su propio rol.")
         if self._era_ultimo_superadmin and not rol.es_superadmin:

@@ -3,6 +3,7 @@
 from django import forms
 from django.contrib.auth.password_validation import validate_password
 
+from core.models import RegistroAuditoria
 from cuentas.models import Permiso, Rol, Usuario
 
 from .servicios import (
@@ -240,3 +241,37 @@ class RolForm(forms.ModelForm):
                 }
             )
         return grupos
+
+
+class FiltroAuditoriaForm(forms.Form):
+    """Filtros GET validados para el visor de auditoría (UTN-09)."""
+
+    tipo = forms.ChoiceField(
+        label="Tipo de evento",
+        required=False,
+        choices=[("", "Todos")] + list(RegistroAuditoria.Tipo.choices),
+    )
+    username = forms.CharField(
+        label="Usuario",
+        required=False,
+        max_length=150,
+        strip=True,
+    )
+    desde = forms.DateField(
+        label="Desde",
+        required=False,
+        widget=forms.DateInput(attrs={"type": "date"}),
+    )
+    hasta = forms.DateField(
+        label="Hasta",
+        required=False,
+        widget=forms.DateInput(attrs={"type": "date"}),
+    )
+
+    def clean(self):
+        datos = super().clean()
+        desde = datos.get("desde")
+        hasta = datos.get("hasta")
+        if desde and hasta and desde > hasta:
+            self.add_error("hasta", "La fecha final no puede ser anterior a la inicial.")
+        return datos

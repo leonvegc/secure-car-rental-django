@@ -18,7 +18,13 @@ from core.models import RegistroAuditoria
 from core.permisos import requiere_permiso, solo_superadmin
 from cuentas.models import Rol, Usuario
 
-from .forms import FiltroUsuariosForm, RolForm, UsuarioCrearForm, UsuarioEditarForm
+from .forms import (
+    FiltroAuditoriaForm,
+    FiltroUsuariosForm,
+    RolForm,
+    UsuarioCrearForm,
+    UsuarioEditarForm,
+)
 from .servicios import es_ultimo_superadmin_activo, resumen_cambios_permisos
 
 
@@ -256,5 +262,31 @@ def roles_borrar(request, pk):
 
 
 @solo_superadmin
+@require_GET
 def auditoria_lista(request):
-    return render(request, "core/en_construccion.html", {"titulo": "Registro de auditoría"})
+    filtro = FiltroAuditoriaForm(request.GET)
+    consulta = RegistroAuditoria.objects.order_by("-fecha_hora", "-pk")
+    parametros = {}
+
+    if filtro.is_valid():
+        datos = filtro.cleaned_data
+        if datos["tipo"]:
+            consulta = consulta.filter(tipo=datos["tipo"])
+            parametros["tipo"] = datos["tipo"]
+        if datos["username"]:
+            consulta = consulta.filter(username__icontains=datos["username"])
+            parametros["username"] = datos["username"]
+        if datos["desde"]:
+            consulta = consulta.filter(fecha_hora__date__gte=datos["desde"])
+            parametros["desde"] = datos["desde"].isoformat()
+        if datos["hasta"]:
+            consulta = consulta.filter(fecha_hora__date__lte=datos["hasta"])
+            parametros["hasta"] = datos["hasta"].isoformat()
+
+    pagina = Paginator(consulta, 50).get_page(request.GET.get("page"))
+    contexto = {
+        "filtro": filtro,
+        "pagina": pagina,
+        "parametros_url": urlencode(parametros),
+    }
+    return render(request, "administracion/auditoria_lista.html", contexto)

@@ -4,6 +4,10 @@
 {% block contenido %}
 <h2>Usuarios</h2>
 
+{% if permisos_usuario|tiene:"usuarios.crear" %}
+<p><a href="{% url 'administracion:usuarios_crear' %}" role="button">Nuevo usuario</a></p>
+{% endif %}
+
 <form method="get">
   {{ filtro.as_div }}
   <button type="submit">Buscar</button>
@@ -41,6 +45,7 @@
         <td>{% if u.is_active %}Sí{% else %}No{% endif %}</td>
         <td class="tabla-acciones">
           <a href="{% url 'administracion:usuarios_detalle' u.pk %}" role="button" class="secondary outline">Ver</a>
+          {% if permisos_usuario|tiene:"usuarios.editar" %}<a href="{% url 'administracion:usuarios_editar' u.pk %}" role="button" class="secondary">Editar</a>{% endif %}
         </td>
       </tr>
       {% endfor %}

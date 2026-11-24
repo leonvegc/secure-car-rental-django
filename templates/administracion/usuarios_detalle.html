@@ -33,5 +33,8 @@
 
 <div class="tabla-acciones">
   <a href="{% url 'administracion:usuarios_lista' %}" role="button" class="secondary outline">Volver a la lista</a>
+  {% if permisos_usuario|tiene:"usuarios.editar" %}
+  <a href="{% url 'administracion:usuarios_editar' usuario.pk %}" role="button">Editar</a>
+  {% endif %}
 </div>
 {% endblock %}

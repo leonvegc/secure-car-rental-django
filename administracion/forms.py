@@ -3,9 +3,14 @@
 from django import forms
 from django.contrib.auth.password_validation import validate_password
 
-from cuentas.models import Rol, Usuario
+from cuentas.models import Permiso, Rol, Usuario
 
-from .servicios import es_ultimo_superadmin_activo
+from .servicios import (
+    ORDEN_ACCIONES,
+    ORDEN_MODULOS,
+    PERMISOS_OBLIGATORIOS_SUPERADMIN,
+    es_ultimo_superadmin_activo,
+)
 
 
 class EmailMinusculaField(forms.EmailField):
@@ -163,3 +168,75 @@ class UsuarioEditarForm(_UsuarioBaseForm):
         if commit:
             usuario.save()
         return usuario
+
+
+class RolForm(forms.ModelForm):
+    """Formulario de roles y asignación de permisos (UTN-05 y UTN-06)."""
+
+    permisos = forms.ModelMultipleChoiceField(
+        label="Permisos",
+        queryset=Permiso.objects.all(),
+        widget=forms.CheckboxSelectMultiple,
+        required=False,
+    )
+
+    class Meta:
+        model = Rol
+        fields = ["nombre", "descripcion", "permisos"]  # Nunca exponer es_superadmin ni es_sistema
+        error_messages = {
+            "nombre": {"unique": "Ya existe un rol con ese nombre."},
+        }
+
+    def clean_nombre(self):
+        return self.cleaned_data["nombre"].strip()
+
+    def clean_descripcion(self):
+        return self.cleaned_data["descripcion"].strip()
+
+    def clean_permisos(self):
+        permisos = self.cleaned_data["permisos"]
+        if self.instance.pk and self.instance.es_superadmin:
+            codigos = {p.codigo for p in permisos}
+            faltantes = sorted(PERMISOS_OBLIGATORIOS_SUPERADMIN - codigos)
+            if faltantes:
+                raise forms.ValidationError(
+                    "Al rol SuperAdmin no se le pueden quitar los permisos esenciales: "
+                    + ", ".join(faltantes)
+                    + "."
+                )
+        return permisos
+
+    def grupos_permisos(self):
+        """Agrupa los permisos por módulo para mostrar los checkboxes ordenados."""
+        if self.is_bound:
+            seleccionados = set(self.data.getlist(self.add_prefix("permisos")))
+        elif self.instance.pk:
+            seleccionados = {str(pk) for pk in self.instance.permisos.values_list("pk", flat=True)}
+        else:
+            seleccionados = set()
+
+        por_modulo = {}
+        for permiso in self.fields["permisos"].queryset:
+            por_modulo.setdefault(permiso.modulo, []).append(permiso)
+
+        orden_accion = {accion: idx for idx, accion in enumerate(ORDEN_ACCIONES)}
+        grupos = []
+        for modulo in ORDEN_MODULOS:
+            lista_modulo = por_modulo.get(modulo)
+            if not lista_modulo:
+                continue
+            lista_modulo.sort(key=lambda p: orden_accion.get(p.accion, 99))
+            grupos.append(
+                {
+                    "modulo": lista_modulo[0].get_modulo_display(),
+                    "opciones": [
+                        {
+                            "pk": p.pk,
+                            "accion": p.get_accion_display(),
+                            "checked": str(p.pk) in seleccionados,
+                        }
+                        for p in lista_modulo
+                    ],
+                }
+            )
+        return grupos

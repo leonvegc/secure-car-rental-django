@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block titulo %}{{ titulo }}{% endblock %}
+{% block contenido %}
+<h2>{{ titulo }}</h2>
+
+<form method="post">
+  {% csrf_token %}
+  {{ form.non_field_errors }}
+
+  <div>
+    {{ form.nombre.label_tag }}
+    {{ form.nombre }}
+    {{ form.nombre.errors }}
+  </div>
+
+  <div>
+    {{ form.descripcion.label_tag }}
+    {{ form.descripcion }}
+    {{ form.descripcion.errors }}
+  </div>
+
+  <h3>Permisos por módulo</h3>
+  {{ form.permisos.errors }}
+  {% for grupo in form.grupos_permisos %}
+  <fieldset>
+    <legend>{{ grupo.modulo }}</legend>
+    {% for opcion in grupo.opciones %}
+    <label>
+      <input type="checkbox" name="permisos" value="{{ opcion.pk }}"{% if opcion.checked %} checked{% endif %}>
+      {{ opcion.accion }}
+    </label>
+    {% endfor %}
+  </fieldset>
+  {% endfor %}
+
+  <button type="submit">Guardar</button>
+  <a href="{% url 'administracion:roles_lista' %}" role="button" class="secondary outline">Cancelar</a>
+</form>
+{% endblock %}

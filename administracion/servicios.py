@@ -1,6 +1,32 @@
 """Reglas de negocio y seguridad del módulo de Administración."""
 
-from cuentas.models import Usuario
+from cuentas.models import Permiso, Usuario
+
+PERMISOS_OBLIGATORIOS_SUPERADMIN = frozenset(
+    {
+        "usuarios.ver",
+        "usuarios.editar",
+        "roles.ver",
+        "roles.editar",
+    }
+)
+
+ORDEN_MODULOS = (
+    Permiso.Modulo.USUARIOS,
+    Permiso.Modulo.ROLES,
+    Permiso.Modulo.VEHICULOS,
+    Permiso.Modulo.CLIENTES,
+    Permiso.Modulo.ALQUILERES,
+    Permiso.Modulo.REPORTES,
+)
+
+ORDEN_ACCIONES = (
+    Permiso.Accion.VER,
+    Permiso.Accion.CREAR,
+    Permiso.Accion.EDITAR,
+    Permiso.Accion.BORRAR,
+    Permiso.Accion.VER_REPORTES,
+)
 
 
 def es_ultimo_superadmin_activo(usuario):

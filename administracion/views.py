@@ -9,16 +9,16 @@ from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
 from django.db import IntegrityError, transaction
-from django.db.models import ProtectedError, Q
+from django.db.models import Count, ProtectedError, Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_GET, require_http_methods
 
 from core.auditoria import registrar_evento
 from core.models import RegistroAuditoria
 from core.permisos import requiere_permiso, solo_superadmin
-from cuentas.models import Usuario
+from cuentas.models import Rol, Usuario
 
-from .forms import FiltroUsuariosForm, UsuarioCrearForm, UsuarioEditarForm
+from .forms import FiltroUsuariosForm, RolForm, UsuarioCrearForm, UsuarioEditarForm
 from .servicios import es_ultimo_superadmin_activo
 
 
@@ -142,8 +142,78 @@ def usuarios_borrar(request, pk):
 
 @solo_superadmin
 @requiere_permiso("roles.ver")
+@require_GET
 def roles_lista(request):
-    return render(request, "core/en_construccion.html", {"titulo": "Roles y permisos"})
+    roles = Rol.objects.annotate(cantidad_usuarios=Count("usuarios", distinct=True)).prefetch_related("permisos")
+    return render(request, "administracion/roles_lista.html", {"roles": roles})
+
+
+@solo_superadmin
+@requiere_permiso("roles.crear")
+@require_http_methods(["GET", "POST"])
+def roles_crear(request):
+    form = RolForm(request.POST or None)
+    if request.method == "POST" and form.is_valid():
+        try:
+            with transaction.atomic():
+                rol = form.save()
+        except IntegrityError:
+            messages.error(request, "No se pudo guardar el rol. Revise los datos ingresados.")
+        else:
+            messages.success(request, f"Rol {rol.nombre} creado.")
+            return redirect("administracion:roles_lista")
+    return render(request, "administracion/rol_form.html", {"form": form, "titulo": "Nuevo rol"})
+
+
+@solo_superadmin
+@requiere_permiso("roles.editar")
+@require_http_methods(["GET", "POST"])
+def roles_editar(request, pk):
+    rol = get_object_or_404(Rol.objects.prefetch_related("permisos"), pk=pk)
+    form = RolForm(request.POST or None, instance=rol)
+    if request.method == "POST" and form.is_valid():
+        try:
+            with transaction.atomic():
+                rol = form.save()
+        except IntegrityError:
+            messages.error(request, "No se pudo actualizar el rol. Revise los datos ingresados.")
+        else:
+            messages.success(request, f"Rol {rol.nombre} actualizado.")
+            return redirect("administracion:roles_lista")
+    return render(
+        request,
+        "administracion/rol_form.html",
+        {"form": form, "titulo": f"Editar rol {rol.nombre}"},
+    )
+
+
+@solo_superadmin
+@requiere_permiso("roles.borrar")
+@require_http_methods(["GET", "POST"])
+def roles_borrar(request, pk):
+    """GET muestra la confirmación; solo el POST (con token CSRF) borra."""
+    rol = get_object_or_404(Rol, pk=pk)
+
+    if rol.es_sistema:
+        messages.error(request, "No se puede borrar un rol del sistema.")
+        return redirect("administracion:roles_lista")
+
+    if rol.usuarios.exists():
+        messages.error(request, "No se puede borrar el rol porque tiene usuarios asignados.")
+        return redirect("administracion:roles_lista")
+
+    if request.method == "POST":
+        nombre = rol.nombre
+        try:
+            with transaction.atomic():
+                rol.delete()
+        except ProtectedError:
+            messages.error(request, "No se puede borrar el rol porque tiene usuarios asignados.")
+            return redirect("administracion:roles_lista")
+        messages.success(request, f"Rol {nombre} borrado.")
+        return redirect("administracion:roles_lista")
+
+    return render(request, "administracion/rol_borrar_confirmar.html", {"rol": rol})
 
 
 @solo_superadmin

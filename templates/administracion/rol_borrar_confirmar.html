@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block titulo %}Borrar rol{% endblock %}
+{% block contenido %}
+<h2>Borrar rol</h2>
+<article>
+  <p>
+    ¿Desea borrar el rol <strong>{{ rol.nombre }}</strong>? Esta acción no se puede deshacer.
+  </p>
+</article>
+
+<form method="post">
+  {% csrf_token %}
+  <button type="submit" class="contrast">Sí, borrar</button>
+  <a href="{% url 'administracion:roles_lista' %}" role="button" class="secondary outline">Cancelar</a>
+</form>
+{% endblock %}

@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% load seguridad %}
+{% block titulo %}Usuarios{% endblock %}
+{% block contenido %}
+<h2>Usuarios</h2>
+
+<form method="get">
+  {{ filtro.as_div }}
+  <button type="submit">Buscar</button>
+  <a href="{% url 'administracion:usuarios_lista' %}" role="button" class="secondary outline">Limpiar</a>
+</form>
+
+{% if pagina.object_list %}
+<div class="overflow-auto">
+  <table>
+    <thead>
+      <tr>
+        <th>Nombre completo</th>
+        <th>Identificación</th>
+        <th>Usuario</th>
+        <th>Correo</th>
+        <th>Rol</th>
+        <th>Permisos del rol</th>
+        <th>Último inicio de sesión</th>
+        <th>Activo</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for u in pagina %}
+      <tr>
+        <td><a href="{% url 'administracion:usuarios_detalle' u.pk %}">{{ u.nombre_completo }}</a></td>
+        <td>{{ u.identificacion }}</td>
+        <td>{{ u.username }}</td>
+        <td>{{ u.email }}</td>
+        <td><span class="etiqueta">{{ u.rol.nombre }}</span></td>
+        <td>
+          {% for p in u.rol.permisos.all %}{{ p }}{% if not forloop.last %}, {% endif %}{% empty %}Sin permisos{% endfor %}
+        </td>
+        <td>{% if u.last_login %}{{ u.last_login|date:"d/m/Y H:i" }}{% else %}Nunca{% endif %}</td>
+        <td>{% if u.is_active %}Sí{% else %}No{% endif %}</td>
+        <td class="tabla-acciones">
+          <a href="{% url 'administracion:usuarios_detalle' u.pk %}" role="button" class="secondary outline">Ver</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if pagina.has_other_pages %}
+<nav aria-label="Paginación">
+  <ul>
+    {% if pagina.has_previous %}
+    <li><a href="?page={{ pagina.previous_page_number }}{% if parametros_url %}&amp;{{ parametros_url }}{% endif %}">Anterior</a></li>
+    {% endif %}
+    <li>Página {{ pagina.number }} de {{ pagina.paginator.num_pages }}</li>
+    {% if pagina.has_next %}
+    <li><a href="?page={{ pagina.next_page_number }}{% if parametros_url %}&amp;{{ parametros_url }}{% endif %}">Siguiente</a></li>
+    {% endif %}
+  </ul>
+</nav>
+{% endif %}
+{% else %}
+<p>No hay usuarios que coincidan con la búsqueda.</p>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% load seguridad %}
+{% block titulo %}Usuario {{ usuario.username }}{% endblock %}
+{% block contenido %}
+<h2>{{ usuario.nombre_completo }} <span class="etiqueta">{{ usuario.rol.nombre }}</span></h2>
+
+<article>
+  <dl>
+    <dt>Usuario</dt>
+    <dd>{{ usuario.username }}</dd>
+    <dt>Identificación</dt>
+    <dd>{{ usuario.identificacion }}</dd>
+    <dt>Correo</dt>
+    <dd>{{ usuario.email }}</dd>
+    <dt>Estado</dt>
+    <dd>{% if usuario.is_active %}Activo{% else %}Inactivo{% endif %}</dd>
+    <dt>Último inicio de sesión</dt>
+    <dd>{% if usuario.last_login %}{{ usuario.last_login|date:"d/m/Y H:i" }}{% else %}Nunca{% endif %}</dd>
+    <dt>Permisos del rol</dt>
+    <dd>
+      {% if usuario.rol.permisos.all %}
+      <ul>
+        {% for p in usuario.rol.permisos.all %}
+        <li>{{ p }}</li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      Sin permisos asignados.
+      {% endif %}
+    </dd>
+  </dl>
+</article>
+
+<div class="tabla-acciones">
+  <a href="{% url 'administracion:usuarios_lista' %}" role="button" class="secondary outline">Volver a la lista</a>
+</div>
+{% endblock %}

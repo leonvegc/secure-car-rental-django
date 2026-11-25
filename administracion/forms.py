@@ -189,7 +189,11 @@ class RolForm(forms.ModelForm):
         }
 
     def clean_nombre(self):
-        return self.cleaned_data["nombre"].strip()
+        nombre = self.cleaned_data["nombre"].strip()
+        # VULN-002: los roles de sistema no se renombran; el seed los busca por nombre en cada despliegue.
+        if self.instance.pk and self.instance.es_sistema and nombre != self.instance.nombre:
+            raise forms.ValidationError("No se puede cambiar el nombre de un rol del sistema.")
+        return nombre
 
     def clean_descripcion(self):
         return self.cleaned_data["descripcion"].strip()

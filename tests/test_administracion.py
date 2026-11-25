@@ -400,3 +400,18 @@ def test_plantillas_administracion_sin_scripts_ni_estilos_en_linea(cliente_super
         html = cliente_superadmin.get(ruta).content.decode()
         assert not re.search(r"<script(?![^>]*\bsrc=)[^>]*>", html), ruta
         assert "onclick=" not in html and 'style="' not in html, ruta
+
+
+@pytest.mark.acceso
+def test_vuln002_rol_de_sistema_no_se_puede_renombrar(cliente_superadmin):
+    """VULN-002: renombrar un rol de sistema se rechaza; editar su descripción sí se permite."""
+    rol = Rol.objects.get(nombre="Auditor")
+    permisos = [str(pk) for pk in rol.permisos.values_list("pk", flat=True)]
+    url = reverse("administracion:roles_editar", args=[rol.pk])
+    r = cliente_superadmin.post(url, {"nombre": "Revisor", "descripcion": "x", "permisos": permisos})
+    assert r.status_code == 200
+    rol.refresh_from_db()
+    assert rol.nombre == "Auditor"
+    cliente_superadmin.post(url, {"nombre": "Auditor", "descripcion": "Solo lectura", "permisos": permisos})
+    rol.refresh_from_db()
+    assert rol.descripcion == "Solo lectura"

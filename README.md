@@ -27,9 +27,9 @@ Se eligió Django porque trae protecciones nativas: un ORM parametrizado, planti
 
 | Rol | Usuario | Contraseña local (DEBUG=1) | Contraseña en el ambiente publicado |
 |---|---|---|---|
-| SuperAdmin | `superadmin` | `Super#Admin2026!` | _(se entrega al equipo evaluador)_ |
-| Auditor | `auditor` | `Audit#Lectura2026!` | _(se entrega al equipo evaluador)_ |
-| Agente de alquiler | `agente` | `Agente#Alquila2026!` | _(se entrega al equipo evaluador)_ |
+| SuperAdmin | `superadmin` | `Super#Admin2026!` | `30dd416adbd419385467fndklgf1fff` |
+| Auditor | `auditor` | `Audit#Lectura2026!` | `524870860e193nvnakjfhw9rbc98e1b` |
+| Agente de alquiler | `agente` | `Agente#Alquila2026!` | `8249d19e9f1828475vnwkcmf11b8e6` |
 
 Tras 5 intentos fallidos, la combinación de usuario e IP queda bloqueada 15 minutos.
 
